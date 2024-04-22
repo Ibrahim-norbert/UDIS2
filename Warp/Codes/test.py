@@ -12,7 +12,7 @@ import skimage
 import cv2
 
 
-last_path = os.path.abspath(os.path.join(os.path.dirname("__file__"), os.path.pardir))
+last_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_DIR = os.path.join(last_path, 'model')
 
 def create_gif(image_list, gif_name, duration=0.35):
@@ -38,7 +38,7 @@ def test(args):
         net = net.cuda()
 
     #load the existing models if it exists
-    ckpt_list = glob.glob(MODEL_DIR + "/*.pth")
+    ckpt_list = glob.glob(os.path.join(MODEL_DIR, "*.pth"))
     ckpt_list.sort()
     if len(ckpt_list) != 0:
         model_path = ckpt_list[-1]
@@ -89,21 +89,21 @@ def test(args):
     print("=================== Analysis ==================")
     print("psnr")
     psnr_list.sort(reverse = True)
-    psnr_list_30 = psnr_list[0 : 331]
-    psnr_list_60 = psnr_list[331: 663]
-    psnr_list_100 = psnr_list[663: -1]
-    print("top 30%", np.mean(psnr_list_30))
-    print("top 30~60%", np.mean(psnr_list_60))
-    print("top 60~100%", np.mean(psnr_list_100))
+    # psnr_list_30 = psnr_list[0 : 331]
+    # psnr_list_60 = psnr_list[331: 663]
+    # psnr_list_100 = psnr_list[663: -1]
+    # print("top 30%", np.mean(psnr_list_30))
+    # print("top 30~60%", np.mean(psnr_list_60))
+    # print("top 60~100%", np.mean(psnr_list_100))
     print('average psnr:', np.mean(psnr_list))
 
     ssim_list.sort(reverse = True)
-    ssim_list_30 = ssim_list[0 : 331]
-    ssim_list_60 = ssim_list[331: 663]
-    ssim_list_100 = ssim_list[663: -1]
-    print("top 30%", np.mean(ssim_list_30))
-    print("top 30~60%", np.mean(ssim_list_60))
-    print("top 60~100%", np.mean(ssim_list_100))
+    # ssim_list_30 = ssim_list[0 : 331]
+    # ssim_list_60 = ssim_list[331: 663]
+    # ssim_list_100 = ssim_list[663: -1]
+    # print("top 30%", np.mean(ssim_list_30))
+    # print("top 30~60%", np.mean(ssim_list_60))
+    # print("top 60~100%", np.mean(ssim_list_100))
     print('average ssim:', np.mean(ssim_list))
     print("##################end testing#######################")
 

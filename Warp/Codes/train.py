@@ -9,8 +9,6 @@ from dataset import TrainDataset
 import glob
 from loss import cal_lp_loss, inter_grid_loss, intra_grid_loss
 
-
-
 last_path = os.path.abspath(os.path.join(os.path.dirname("__file__"), os.path.pardir))
 # path to save the summary files
 SUMMARY_DIR = os.path.join(last_path, 'summary')
@@ -24,15 +22,14 @@ if not os.path.exists(SUMMARY_DIR):
     os.makedirs(SUMMARY_DIR)
 
 
-
 def train(args):
-
     os.environ['CUDA_DEVICES_ORDER'] = "PCI_BUS_ID"
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    
+
     # define dataset
     train_data = TrainDataset(data_path=args.train_path)
-    train_loader = DataLoader(dataset=train_data, batch_size=args.batch_size, num_workers=4, shuffle=True, drop_last=True)
+    train_loader = DataLoader(dataset=train_data, batch_size=args.batch_size, num_workers=4, shuffle=True,
+                              drop_last=True)
 
     # define the network
     net = Network()
@@ -43,7 +40,7 @@ def train(args):
     optimizer = optim.Adam(net.parameters(), lr=1e-4, betas=(0.9, 0.999), eps=1e-08)  # default as 0.0001
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.97)
 
-    #load the existing models if it exists
+    # load the existing models if it exists
     ckpt_list = glob.glob(MODEL_DIR + "/*.pth")
     ckpt_list.sort()
     if len(ckpt_list) != 0:
@@ -60,8 +57,6 @@ def train(args):
         start_epoch = 0
         glob_iter = 0
         print('training from stratch!')
-
-
 
     print("##################start training#######################")
     score_print_fre = 300
@@ -101,7 +96,7 @@ def train(args):
             # calculate loss for overlapping regions
             overlap_loss = cal_lp_loss(inpu1_tesnor, inpu2_tesnor, output_H, output_H_inv, warp_mesh, warp_mesh_mask)
             # calculate loss for non-overlapping regions
-            nonoverlap_loss = 10*inter_grid_loss(overlap, mesh2) + 10*intra_grid_loss(mesh2)
+            nonoverlap_loss = 10 * inter_grid_loss(overlap, mesh2) + 10 * intra_grid_loss(mesh2)
 
             total_loss = overlap_loss + nonoverlap_loss
             total_loss.backward()
@@ -119,19 +114,22 @@ def train(args):
             # record loss and images in tensorboard
             if i % score_print_fre == 0 and i != 0:
                 average_loss = loss_sigma / score_print_fre
-                average_overlap_loss = overlap_loss_sigma/ score_print_fre
-                average_nonoverlap_loss = nonoverlap_loss_sigma/ score_print_fre
+                average_overlap_loss = overlap_loss_sigma / score_print_fre
+                average_nonoverlap_loss = nonoverlap_loss_sigma / score_print_fre
                 loss_sigma = 0.0
                 overlap_loss_sigma = 0.
                 nonoverlap_loss_sigma = 0.
 
-                print("Training: Epoch[{:0>3}/{:0>3}] Iteration[{:0>3}]/[{:0>3}] Total Loss: {:.4f}  Overlap Loss: {:.4f}  Non-overlap Loss: {:.4f} lr={:.8f}".format(epoch + 1, args.max_epoch, i + 1, len(train_loader),
-                                          average_loss, average_overlap_loss, average_nonoverlap_loss, optimizer.state_dict()['param_groups'][0]['lr']))
+                print(
+                    "Training: Epoch[{:0>3}/{:0>3}] Iteration[{:0>3}]/[{:0>3}] Total Loss: {:.4f}  Overlap Loss: {:.4f}  Non-overlap Loss: {:.4f} lr={:.8f}".format(
+                        epoch + 1, args.max_epoch, i + 1, len(train_loader),
+                        average_loss, average_overlap_loss, average_nonoverlap_loss,
+                        optimizer.state_dict()['param_groups'][0]['lr']))
                 # visualization
-                writer.add_image("inpu1", (inpu1_tesnor[0]+1.)/2., glob_iter)
-                writer.add_image("inpu2", (inpu2_tesnor[0]+1.)/2., glob_iter)
-                writer.add_image("warp_H", (output_H[0,0:3,:,:]+1.)/2., glob_iter)
-                writer.add_image("warp_mesh", (warp_mesh[0]+1.)/2., glob_iter)
+                writer.add_image("inpu1", (inpu1_tesnor[0] + 1.) / 2., glob_iter)
+                writer.add_image("inpu2", (inpu2_tesnor[0] + 1.) / 2., glob_iter)
+                writer.add_image("warp_H", (output_H[0, 0:3, :, :] + 1.) / 2., glob_iter)
+                writer.add_image("warp_mesh", (warp_mesh[0] + 1.) / 2., glob_iter)
                 writer.add_scalar('lr', optimizer.state_dict()['param_groups'][0]['lr'], glob_iter)
                 writer.add_scalar('total loss', average_loss, glob_iter)
                 writer.add_scalar('overlap loss', average_overlap_loss, glob_iter)
@@ -139,20 +137,18 @@ def train(args):
 
             glob_iter += 1
 
-
         scheduler.step()
         # save model
-        if ((epoch+1) % 10 == 0 or (epoch+1)==args.max_epoch):
-            filename ='epoch' + str(epoch+1).zfill(3) + '_model.pth'
+        if ((epoch + 1) % 10 == 0 or (epoch + 1) == args.max_epoch):
+            filename = 'epoch' + str(epoch + 1).zfill(3) + '_model.pth'
             model_save_path = os.path.join(MODEL_DIR, filename)
-            state = {'model': net.state_dict(), 'optimizer': optimizer.state_dict(), 'epoch': epoch+1, "glob_iter": glob_iter}
+            state = {'model': net.state_dict(), 'optimizer': optimizer.state_dict(), 'epoch': epoch + 1,
+                     "glob_iter": glob_iter}
             torch.save(state, model_save_path)
     print("##################end training#######################")
 
 
-if __name__=="__main__":
-
-
+if __name__ == "__main__":
     print('<==================== setting arguments ===================>\n')
 
     # create the argument parser
